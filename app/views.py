@@ -27,9 +27,9 @@ def user_create():
                     "email": user.email,
                     "total_reactions": user.total_reactions,
                     "posts": user.posts,
-                }),
-                HTTPStatus.OK,
-                mimetype="application/json",
+            }),
+            HTTPStatus.OK,
+            mimetype="application/json",
         )
         return response
     return Response(status=HTTPStatus.BAD_REQUEST)
