@@ -1,12 +1,13 @@
 # model.py
+import json
 import re
 
 
 class User:
     """Создаёт пользователя платформы социальной сети"""
 
-    def __init__(self, id, first_name, last_name, email):
-        self.id = id
+    def __init__(self, user_id, first_name, last_name, email):
+        self.id = user_id
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
@@ -26,15 +27,32 @@ class User:
     def put_reaction(self):
         self.total_reactions += 1
 
+    def get_sorted_posts(self, key):
+        posts = sorted(self.posts, key=lambda post: post.get_count_reactions())
+        if key == 'asc':
+            return posts
+        return posts[::-1]
+
+    def add_post(self, post):
+        self.posts.append(post)
+
 
 class Post:
     """Создаёт текстовый пост"""
 
-    def __init__(self, id, author_id, text):
-        self.id = id
+    def __init__(self, post_id, author_id, text):
+        self.id = post_id
         self.author_id = author_id
         self.text = text
         self.reactions = []
 
     def add_reaction(self, reaction):
         self.reactions.append(reaction)
+
+    def get_count_reactions(self):
+        return len(self.reactions)
+
+
+class MyEncoder(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__
