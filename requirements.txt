@@ -4,6 +4,7 @@ async-timeout==4.0.3
 attrs==23.1.0
 black==23.9.1
 blinker==1.6.3
+certifi==2023.7.22
 charset-normalizer==3.3.0
 click==8.1.7
 colorama==0.4.6
@@ -20,5 +21,6 @@ pathspec==0.11.2
 platformdirs==3.11.0
 tomli==2.0.1
 typing_extensions==4.8.0
+urllib3==2.0.6
 Werkzeug==3.0.0
 yarl==1.9.2
