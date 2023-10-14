@@ -18,16 +18,15 @@ def user_create():
     if models.User.is_valid_email(email) and all(user.email != email for user in USERS):
         user = models.User(user_id, first_name, last_name, email)
         USERS.append(user)
-        # FIXME не отображаются реакции на пост в json
         response = Response(
-            json.dumps(
+            models.MyEncoder().encode(
                 {
                     "id": user.id,
                     "first_name": user.first_name,
                     "last_name": user.last_name,
                     "email": user.email,
                     "total_reactions": user.total_reactions,
-                    "posts": user.posts,
+                    "posts": [get_information_about_post(post.id).get_json() for post in user.posts],
                 }
             ),
             HTTPStatus.OK,
@@ -42,7 +41,6 @@ def get_user(user_id):
     if user_id < 0 or user_id >= len(USERS):
         return Response(status=HTTPStatus.NOT_FOUND)
     user = USERS[user_id]
-    # FIXME не отображаются реакции на пост в json
     response = Response(
         models.MyEncoder().encode({
                 "id": user.id,
@@ -50,7 +48,7 @@ def get_user(user_id):
                 "last_name": user.last_name,
                 "email": user.email,
                 "total_reactions": user.total_reactions,
-                "posts": user.posts,
+                "posts": [get_information_about_post(post.id).get_json() for post in user.posts],
             }
         ),
         HTTPStatus.OK,
@@ -134,9 +132,8 @@ def get_all_posts(user_id):
         return Response(status=HTTPStatus.NOT_FOUND)
     user = USERS[user_id]
     posts = user.get_sorted_posts(sort)
-    # FIXME не отображаются реакции на пост в json
     response = Response(
-        models.MyEncoder().encode({"posts": posts}),
+        models.MyEncoder().encode({"posts": [get_information_about_post(post.id).get_json() for post in user.posts]}),
         HTTPStatus.OK,
         mimetype="application/json",
     )
