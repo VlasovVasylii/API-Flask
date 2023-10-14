@@ -6,18 +6,19 @@ from http import HTTPStatus
 
 @app.post("/users/create")
 def user_create():
-    data = request.get_json()
-    id = len(USERS)
     try:
+        data = request.get_json()
+        user_id = len(USERS)
         first_name = data["first_name"]
         last_name = data["last_name"]
         email = data["email"]
-    except:
+    except Exception:
         return Response(status=HTTPStatus.BAD_REQUEST)
 
     if models.User.is_valid_email(email) and all(user.email != email for user in USERS):
-        user = models.User(id, first_name, last_name, email)
+        user = models.User(user_id, first_name, last_name, email)
         USERS.append(user)
+        # FIXME не отображаются реакции на пост в json
         response = Response(
             json.dumps(
                 {
@@ -41,9 +42,9 @@ def get_user(user_id):
     if user_id < 0 or user_id >= len(USERS):
         return Response(status=HTTPStatus.NOT_FOUND)
     user = USERS[user_id]
+    # FIXME не отображаются реакции на пост в json
     response = Response(
-        json.dumps(
-            {
+        models.MyEncoder().encode({
                 "id": user.id,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
@@ -60,15 +61,16 @@ def get_user(user_id):
 
 @app.post("/posts/create")
 def create_post():
-    data = request.get_json()
-    post_id = len(POSTS)
     try:
+        data = request.get_json()
+        post_id = len(POSTS)
         author_id = data["author_id"]
         text = data["text"]
-    except:
+    except KeyError:
         return Response(status=HTTPStatus.BAD_REQUEST)
     post = models.Post(post_id, author_id, text)
     POSTS.append(models.Post(post_id, author_id, text))
+    USERS[author_id].add_post(post)
     response = Response(
         json.dumps(
             {
@@ -106,16 +108,41 @@ def get_information_about_post(post_id):
 
 @app.post("/posts/<int:post_id>/reaction")
 def put_a_reaction_to_the_post(post_id):
-    data = request.get_json()
     try:
+        data = request.get_json()
         user_id = data["user_id"]
         reaction = data["reaction"]
-    except:
+    except Exception:
+        return Response(status=HTTPStatus.BAD_REQUEST)
+    if POSTS[post_id].author_id == user_id:
         return Response(status=HTTPStatus.BAD_REQUEST)
     if user_id < 0 or user_id >= len(USERS) or post_id < 0 or post_id >= len(POSTS):
         return Response(status=HTTPStatus.NOT_FOUND)
-    if POSTS[post_id].author_id == user_id:
-        return Response(status=HTTPStatus.BAD_REQUEST)
     POSTS[post_id].add_reaction(reaction)
     USERS[user_id].put_reaction()
     return Response(status=HTTPStatus.OK)
+
+
+@app.get('/users/<int:user_id>/posts')
+def get_all_posts(user_id):
+    try:
+        data = request.get_json()
+        sort = data['sort']
+    except Exception:
+        return Response(status=HTTPStatus.BAD_REQUEST)
+    if user_id < 0 or user_id >= len(USERS):
+        return Response(status=HTTPStatus.NOT_FOUND)
+    user = USERS[user_id]
+    posts = user.get_sorted_posts(sort)
+    # FIXME не отображаются реакции на пост в json
+    response = Response(
+        models.MyEncoder().encode({"posts": posts}),
+        HTTPStatus.OK,
+        mimetype="application/json",
+    )
+    return response
+
+
+@app.get('/users/leaderboard')
+def get_information_about_users():
+    pass
