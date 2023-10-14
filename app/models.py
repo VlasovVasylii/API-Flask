@@ -3,7 +3,7 @@ import re
 
 
 class User:
-    """Создаёт класс пользователя платформы социальной сети"""
+    """Создаёт пользователя платформы социальной сети"""
 
     def __init__(self, id, first_name, last_name, email):
         self.id = id
@@ -22,3 +22,19 @@ class User:
         if re.match(r"[^@]+@[^@]+\.[^@]+", email):
             return True
         return False
+
+    def put_reaction(self):
+        self.total_reactions += 1
+
+
+class Post:
+    """Создаёт текстовый пост"""
+
+    def __init__(self, id, author_id, text):
+        self.id = id
+        self.author_id = author_id
+        self.text = text
+        self.reactions = []
+
+    def add_reaction(self, reaction):
+        self.reactions.append(reaction)
