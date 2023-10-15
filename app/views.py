@@ -26,7 +26,10 @@ def user_create():
                     "last_name": user.last_name,
                     "email": user.email,
                     "total_reactions": user.total_reactions,
-                    "posts": [get_information_about_post(post.id).get_json() for post in user.posts],
+                    "posts": [
+                        get_information_about_post(post.id).get_json()
+                        for post in user.posts
+                    ],
                 }
             ),
             HTTPStatus.OK,
@@ -42,13 +45,17 @@ def get_user(user_id):
         return Response(status=HTTPStatus.NOT_FOUND)
     user = USERS[user_id]
     response = Response(
-        models.MyEncoder().encode({
+        models.MyEncoder().encode(
+            {
                 "id": user.id,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "email": user.email,
                 "total_reactions": user.total_reactions,
-                "posts": [get_information_about_post(post.id).get_json() for post in user.posts],
+                "posts": [
+                    get_information_about_post(post.id).get_json()
+                    for post in user.posts
+                ],
             }
         ),
         HTTPStatus.OK,
@@ -121,11 +128,11 @@ def put_a_reaction_to_the_post(post_id):
     return Response(status=HTTPStatus.OK)
 
 
-@app.get('/users/<int:user_id>/posts')
+@app.get("/users/<int:user_id>/posts")
 def get_all_posts(user_id):
     try:
         data = request.get_json()
-        sort = data['sort']
+        sort = data["sort"]
     except Exception:
         return Response(status=HTTPStatus.BAD_REQUEST)
     if user_id < 0 or user_id >= len(USERS):
@@ -133,13 +140,43 @@ def get_all_posts(user_id):
     user = USERS[user_id]
     posts = user.get_sorted_posts(sort)
     response = Response(
-        models.MyEncoder().encode({"posts": [get_information_about_post(post.id).get_json() for post in user.posts]}),
+        models.MyEncoder().encode(
+            {
+                "posts": [
+                    get_information_about_post(post.id).get_json()
+                    for post in user.posts
+                ]
+            }
+        ),
         HTTPStatus.OK,
         mimetype="application/json",
     )
     return response
 
 
-@app.get('/users/leaderboard')
+@app.get("/users/leaderboard")
 def get_information_about_users():
-    pass
+    try:
+        data = request.get_json()
+        response_type = data["type"]
+    except Exception:
+        return Response(status=HTTPStatus.BAD_REQUEST)
+    if response_type == "list":
+        sort = data["sort"]
+        sorted_list = models.get_sorted_users(USERS, sort)
+        if sorted_list:
+            response = Response(
+                models.MyEncoder().encode(
+                    {"users": [get_user(user.id).get_json() for user in sorted_list]}
+                ),
+                HTTPStatus.OK,
+                mimetype="application/json",
+            )
+            return response
+        else:
+            return Response(status=HTTPStatus.BAD_REQUEST)
+    elif response_type == "graph":
+        # todo реализовать создание графика пользователей
+        #  по количеству реакций и его передача в формате img
+        return
+    return Response(status=HTTPStatus.BAD_REQUEST)
