@@ -1,3 +1,7 @@
+"""
+Все модели использующиеся в проекте
+"""
+
 # model.py
 import json
 import re
