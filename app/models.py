@@ -3,6 +3,15 @@ import json
 import re
 
 
+def get_sorted_users(users, key):
+    sorted_users = sorted(users, key=lambda user: user.total_reactions)
+    if key == "asc":
+        return sorted_users
+    elif key == "desc":
+        return sorted_users[::-1]
+    return None
+
+
 class User:
     """Создаёт пользователя платформы социальной сети"""
 
@@ -29,7 +38,7 @@ class User:
 
     def get_sorted_posts(self, key):
         posts = sorted(self.posts, key=lambda post: post.get_count_reactions())
-        if key == 'asc':
+        if key == "asc":
             return posts
         return posts[::-1]
 
