@@ -33,9 +33,7 @@ class User:
         через регулярное выражения, но не проверяет её существование
         или кому она принадлежит"""
 
-        if re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            return True
-        return False
+        return re.match(r"[^@]+@[^@]+\.[^@]+", email)
 
     def put_reaction(self):
         self.total_reactions += 1
