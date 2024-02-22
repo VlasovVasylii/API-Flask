@@ -38,6 +38,7 @@ def user_create():
                     "posts": [
                         get_information_about_post(post.id).get_json()
                         for post in user.posts
+                        if post.is_valid_id(post.id)
                     ],
                 }
             ),
@@ -55,7 +56,7 @@ def user_create():
 
 @app.get("/users/<int:user_id>")
 def get_user(user_id):
-    if user_id < 0 or user_id >= len(USERS):
+    if not models.User.is_valid_id(user_id):
         return Response(
             "Такого пользователя не существует",
             status=HTTPStatus.NOT_FOUND,
@@ -96,7 +97,14 @@ def get_users_leaderboard():
             mimetype="text",
         )
     if response_type == "list":
-        sort = data["sort"]
+        try:
+            sort = data["sort"]
+        except KeyError:
+            return Response(
+                "Были переданы не все параметры",
+                status=HTTPStatus.BAD_REQUEST,
+                mimetype="text",
+            )
         sorted_list = models.get_sorted_users(USERS, sort)
         if sorted_list:
             response = Response(
@@ -108,7 +116,11 @@ def get_users_leaderboard():
             )
             return response
         else:
-            return Response(status=HTTPStatus.BAD_REQUEST)
+            return Response(
+                "Были переданы не все параметры",
+                status=HTTPStatus.BAD_REQUEST,
+                mimetype="text",
+            )
     elif response_type == "graph":
         sorted_users = models.get_sorted_users(USERS, "asc")
         fig, ax = plt.subplots()
@@ -124,8 +136,46 @@ def get_users_leaderboard():
         ax.set_title("User leaderboard by quantity reactions")
         plt.savefig("app/static/users_leaderboard.png")
         return Response(
-            f"""<img src= "{url_for('static', filename='users_leaderboard.png')}">""",
+            f"""<img src="{url_for('static', filename='users_leaderboard.png')}">""",
             status=HTTPStatus.OK,
             mimetype="text/html",
         )
-    return Response(status=HTTPStatus.BAD_REQUEST)
+    return Response(
+            "Были переданы не все параметры",
+            status=HTTPStatus.BAD_REQUEST,
+            mimetype="text",
+        )
+
+
+@app.delete("/user/<int:user_id>")
+def delete_user(user_id):
+    if not models.User.is_valid_id(user_id):
+        return Response(
+            "Такого пользователя не существует",
+            status=HTTPStatus.NOT_FOUND,
+            mimetype="text",
+        )
+
+    user = USERS[user_id]
+    USERS[user_id].status = "deleted"
+
+    response = Response(
+        models.MyEncoder().encode(
+            {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "total_reactions": user.total_reactions,
+                "posts": [
+                    get_information_about_post(post.id).get_json()
+                    for post in user.posts
+                    if post.is_valid_id(post.id)
+                ],
+                "status": user.status,
+            }
+        ),
+        HTTPStatus.OK,
+        mimetype="application/json",
+    )
+    return response

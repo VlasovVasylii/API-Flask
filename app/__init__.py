@@ -12,3 +12,4 @@ POSTS = []  # лист, хранящий посты в runtime
 from app import views
 from app import models
 from app import views_all
+from app import tests
